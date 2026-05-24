@@ -22,13 +22,13 @@ def kzPompeiPublicationScmUrl = 'https://github.com/pompei-kz/gradle-plugins'
 gradlePlugin {
   plugins {
     kzPompeiPublication {
-      id = 'kz-pompei-publication'
+      id = 'kz.pompei.publication'
       displayName = 'Kz Pompei publication plugin'
       description = 'Configures Maven publication metadata and signing for kz.pompei projects.'
       implementationClass = 'kz.pompei.gradle.KzPompeiPublicationPlugin'
     }
     gotoMaven {
-      id = 'goto-maven'
+      id = 'kz.pompei.goto-maven'
       displayName = 'Goto Maven Central plugin'
       description = 'Deploys staged Maven artifacts to Maven Central with JReleaser.'
       implementationClass = 'kz.pompei.gradle.GotoMavenPlugin'
@@ -122,6 +122,10 @@ jreleaser {
       }
     }
   }
+}
+
+tasks.named('jreleaserDeploy') {
+  dependsOn tasks.named('publishAllPublicationsToMavenRepository')
 }
 
 tasks.register('goto-maven') {

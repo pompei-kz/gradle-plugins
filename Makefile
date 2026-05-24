@@ -2,4 +2,4 @@ hello:
 	echo "Hello"
 
 goto-maven:
-	./gradlew goto-maven
+	./gradlew clean goto-maven
