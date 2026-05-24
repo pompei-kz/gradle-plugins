@@ -1,20 +1,45 @@
 plugins {
-    id 'java'
+  id 'groovy-gradle-plugin'
 }
-
-group = 'kz.pompei.scheduler'
-version = '1.0-SNAPSHOT'
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
-dependencies {
-    testImplementation platform('org.junit:junit-bom:6.0.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+version = "0.0.1"
+
+gradlePlugin {
+  plugins {
+    kzPompeiPublication {
+      id = 'kz-pompei-publication'
+      implementationClass = 'kz.pompei.gradle.KzPompeiPublicationPlugin'
+    }
+    gotoMaven {
+      id = 'goto-maven'
+      implementationClass = 'kz.pompei.gradle.GotoMavenPlugin'
+    }
+  }
 }
 
-test {
-    useJUnitPlatform()
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+[compileJava, compileTestJava]*.options*.debugOptions*.debugLevel = "source,lines,vars"
+
+java {
+  withSourcesJar()
+  withJavadocJar()
+}
+
+tasks.withType(Javadoc).configureEach {
+  //noinspection SpellCheckingInspection
+  options.addStringOption('Xdoclint:none', '-quiet')
+  options.addStringOption('encoding', 'UTF-8')
+  options.addStringOption('charSet', 'UTF-8')
+}
+
+jar {
+  manifest {
+    attributes 'Specification-Title': project.name
+    attributes 'Specification-Version': archiveVersion
+    attributes 'Specification-Vendor': "pompei"
+  }
 }
