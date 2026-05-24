@@ -28,9 +28,13 @@ class KzPompeiPublicationPlugin implements Plugin<Project> {
   private static void configurePublishing(Project project, KzPompeiPublicationExtension extension) {
     project.extensions.configure(PublishingExtension) { publishing ->
       publishing.publications {
-        mavenJava(MavenPublication) {
-          from project.components.java
+        if (withType(MavenPublication).empty) {
+          mavenJava(MavenPublication) {
+            from project.components.java
+          }
+        }
 
+        withType(MavenPublication).configureEach { MavenPublication publication ->
           pom {
             name = extension.pom.name
             description = extension.pom.description
@@ -73,7 +77,7 @@ class KzPompeiPublicationPlugin implements Plugin<Project> {
   private static void configureSigning(Project project) {
     project.extensions.configure(SigningExtension) { signing ->
       signing.useGpgCmd()
-      signing.sign(project.extensions.getByType(PublishingExtension).publications.mavenJava)
+      signing.sign(project.extensions.getByType(PublishingExtension).publications.withType(MavenPublication))
     }
   }
 

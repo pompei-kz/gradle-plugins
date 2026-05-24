@@ -1,21 +1,36 @@
 plugins {
   id 'groovy-gradle-plugin'
+  id 'maven-publish'
+  id 'signing'
+  id 'org.jreleaser' version '1.24.0'
 }
 
 repositories {
   mavenCentral()
 }
 
+group = "kz.pompei.gradle"
 version = "0.0.1"
+
+def kzPompeiPublicationPomName = 'kz-pompei-gradle-plugins'
+def kzPompeiPublicationPomDescription = 'Gradle plugins used by kz.pompei projects.'
+def kzPompeiPublicationPomUrl = 'https://github.com/pompei-kz/gradle-plugins'
+def kzPompeiPublicationScmConnection = 'scm:git:https://github.com/pompei-kz/gradle-plugins.git'
+def kzPompeiPublicationScmDeveloperConnection = 'scm:git:ssh://git@github.com:pompei-kz/gradle-plugins.git'
+def kzPompeiPublicationScmUrl = 'https://github.com/pompei-kz/gradle-plugins'
 
 gradlePlugin {
   plugins {
     kzPompeiPublication {
       id = 'kz-pompei-publication'
+      displayName = 'Kz Pompei publication plugin'
+      description = 'Configures Maven publication metadata and signing for kz.pompei projects.'
       implementationClass = 'kz.pompei.gradle.KzPompeiPublicationPlugin'
     }
     gotoMaven {
       id = 'goto-maven'
+      displayName = 'Goto Maven Central plugin'
+      description = 'Deploys staged Maven artifacts to Maven Central with JReleaser.'
       implementationClass = 'kz.pompei.gradle.GotoMavenPlugin'
     }
   }
@@ -42,4 +57,75 @@ jar {
     attributes 'Specification-Version': archiveVersion
     attributes 'Specification-Vendor': "pompei"
   }
+}
+
+publishing {
+  publications.withType(MavenPublication).configureEach {
+    pom {
+      name = kzPompeiPublicationPomName
+      description = kzPompeiPublicationPomDescription
+      url = kzPompeiPublicationPomUrl
+
+      licenses {
+        license {
+          name = 'MIT License'
+          url = 'https://opensource.org/license/mit/'
+        }
+      }
+
+      developers {
+        developer {
+          id = 'pompei'
+          name = 'Евгений Колпаков'
+          email = 'pompei@mail.ru'
+        }
+      }
+
+      scm {
+        connection = kzPompeiPublicationScmConnection
+        developerConnection = kzPompeiPublicationScmDeveloperConnection
+        url = kzPompeiPublicationScmUrl
+      }
+    }
+  }
+
+  repositories {
+    maven {
+      url = layout.buildDirectory.dir('staging-deploy')
+    }
+  }
+}
+
+signing {
+  useGpgCmd()
+  sign publishing.publications.withType(MavenPublication)
+}
+
+jreleaser {
+  gitRootSearch = true
+
+  signing {
+    active = 'ALWAYS'
+    armored = true
+  }
+
+  deploy {
+    maven {
+      mavenCentral {
+        sonatype {
+          active = 'ALWAYS'
+          url = 'https://central.sonatype.com/api/v1/publisher'
+          stagingRepository('build/staging-deploy')
+          applyMavenCentralRules = true
+          namespace = 'kz.pompei'
+        }
+      }
+    }
+  }
+}
+
+tasks.register('goto-maven') {
+  group = 'pompei'
+  description = 'Deploys staged artifacts to Maven Central.'
+  dependsOn tasks.matching { it.name == 'jreleaserDeploy' }
 }
